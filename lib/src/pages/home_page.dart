@@ -58,6 +58,31 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     }
   }
 
+  Future<void> updateTask(String taskId, String title, String description,
+      DateTime? deadline, String? status, List<String>? labels) async {
+    try {
+      final data = {
+        'title': title,
+        'description': description,
+        'status': status ?? 'To-do', // Ensure status has a default valid value
+      };
+
+      // Add deadline only if it's not null
+      if (deadline != null) {
+        data['due_date'] = deadline.toIso8601String();
+      }
+
+      await databases.updateDocument(
+        databaseId: '66b2f92b001fa210401e',
+        collectionId: '66b2fede0024cc71bab7',
+        documentId: taskId,
+        data: data,
+      );
+    } catch (e) {
+      print('Error updating task: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,47 +155,61 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(10),
-                        child: Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    task['title'] ?? 'No Title',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                        child: GestureDetector(
+                          onTap: () {
+                            // Handle task tap
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (context) {
+                                return TaskEditSheet(
+                                  task: task,
+                                  updateTask:
+                                      updateTask, // Pass the updateTask function
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      task['title'] ?? 'No Title',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    task['due_date'] != null
-                                        ? DateFormat.yMMMMd().format(
-                                            DateTime.parse(task['due_date']))
-                                        : 'No Due Date',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[700],
+                                    SizedBox(height: 8),
+                                    Text(
+                                      task['due_date'] != null
+                                          ? DateFormat.yMMMMd().format(
+                                              DateTime.parse(task['due_date']))
+                                          : 'No Due Date',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[700],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(width: 16),
-                              Container(
+                                  ],
+                                ),
+                                SizedBox(width: 16),
+                                Container(
                                   width: 70,
                                   height: 20,
                                   decoration: BoxDecoration(
@@ -186,8 +225,10 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                                       task['status'] ?? 'To-Do',
                                       style: TextStyle(color: Colors.white),
                                     ),
-                                  )),
-                            ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -202,15 +243,187 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     );
   }
 
-  taskColor(task) {
-    if (task == 'To-do') {
+  taskColor(String? taskStatus) {
+    if (taskStatus == 'To-do') {
       return Colors.blue.withOpacity(0.8);
-    } else if (task == 'In-progress') {
+    } else if (taskStatus == 'In-progress') {
       return Colors.orange.withOpacity(0.8);
-    } else if (task == 'Done') {
+    } else if (taskStatus == 'Done') {
       return Colors.green.withOpacity(0.8);
     } else {
       return Colors.grey.withOpacity(0.5);
     }
+  }
+}
+
+class TaskEditSheet extends StatefulWidget {
+  final Map<String, dynamic> task;
+  final Function(String taskId, String title, String description,
+      DateTime? deadline, String? status, List<String>? labels) updateTask;
+
+  TaskEditSheet({required this.task, required this.updateTask});
+
+  @override
+  _TaskEditSheetState createState() => _TaskEditSheetState();
+}
+
+class _TaskEditSheetState extends State<TaskEditSheet> {
+  late TextEditingController titleController;
+  late TextEditingController descriptionController;
+  DateTime? _selectedDeadline;
+  String? _selectedPriority;
+  String? _selectedStatus;
+  String? _selectedCategory;
+
+  final List<String> _priorities = ['Low', 'Medium', 'High'];
+  final List<String> _statuses = [
+    'To-do',
+    'In-progress',
+    'Done'
+  ]; // Corrected status values
+  final List<String> _categories = ['Work', 'Personal', 'Others'];
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController(text: widget.task['title'] ?? '');
+    descriptionController =
+        TextEditingController(text: widget.task['description'] ?? '');
+    _selectedPriority = _priorities.contains(widget.task['priority'])
+        ? widget.task['priority']
+        : _priorities[0];
+    _selectedStatus = _statuses.contains(widget.task['status'])
+        ? widget.task['status']
+        : _statuses[0];
+    _selectedCategory = _categories.contains(widget.task['category'])
+        ? widget.task['category']
+        : _categories[0];
+    if (widget.task['due_date'] != null) {
+      _selectedDeadline =
+          DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
+    }
+  }
+
+  void _presentDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: _selectedDeadline ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDeadline = pickedDate;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(labelText: 'Title'),
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: descriptionController,
+              decoration: InputDecoration(labelText: 'Description'),
+              maxLines: 2,
+            ),
+            SizedBox(height: 20),
+            Row(
+              children: [
+                Text(
+                  _selectedDeadline == null
+                      ? 'No Deadline Chosen!'
+                      : 'Deadline: ${DateFormat.yMd().format(_selectedDeadline!)}',
+                ),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: _presentDatePicker,
+                  child: Text('Choose Deadline'),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedPriority,
+              decoration: InputDecoration(labelText: 'Priority'),
+              items: _priorities.map((String priority) {
+                return DropdownMenuItem<String>(
+                  value: priority,
+                  child: Text(priority),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedPriority = newValue;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedStatus,
+              decoration: InputDecoration(labelText: 'Status'),
+              items: _statuses.map((String status) {
+                return DropdownMenuItem<String>(
+                  value: status,
+                  child: Text(status),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedStatus = newValue;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: InputDecoration(labelText: 'Category'),
+              items: _categories.map((String category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedCategory = newValue;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Collect the edited task data
+                final String taskId = widget.task['\$id'] ?? '';
+                final String title = titleController.text;
+                final String description = descriptionController.text;
+                final DateTime? deadline = _selectedDeadline;
+                final String? status = _selectedStatus;
+
+                // Call the updateTask function
+                widget.updateTask(
+                    taskId, title, description, deadline, status, []);
+
+                // Close the bottom sheet
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
