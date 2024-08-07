@@ -8,6 +8,10 @@ Future<String?> getSessionFromSharedPreferences() async {
   return prefs.getString('session_id');
 }
 
+Future getCurrentUser() async {
+    return await account.get();
+  }
+
 Future<void> logout(context) async {
   try {
     final session_id = await getSessionFromSharedPreferences();
@@ -23,5 +27,5 @@ Future<void> logout(context) async {
     // Handle errors, such as network issues or unauthorized access
     print('Error deleting session: $e');
   }
-  
+
 }
