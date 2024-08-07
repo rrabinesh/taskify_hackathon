@@ -20,45 +20,47 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       appBar: AppBar(
         title: Text('Create Task'),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-            TextField(
-              controller: _labelsController,
-              decoration:
-                  InputDecoration(labelText: 'Labels (comma separated)'),
-            ),
-            SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  _selectedDeadline == null
-                      ? 'No Deadline Chosen!'
-                      : 'Deadline: ${DateFormat.yMd().format(_selectedDeadline)}',
-                ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: _presentDatePicker,
-                  child: Text('Choose Deadline'),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _createTask,
-              child: Text('Create Task'),
-            ),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+              ),
+              TextField(
+                controller: _labelsController,
+                decoration:
+                    InputDecoration(labelText: 'Labels (comma separated)'),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Text(
+                    _selectedDeadline == null
+                        ? 'No Deadline Chosen!'
+                        : 'Deadline: ${DateFormat.yMd().format(_selectedDeadline)}',
+                  ),
+                  Spacer(),
+                  ElevatedButton(
+                    onPressed: _presentDatePicker,
+                    child: Text('Choose Deadline'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _createTask,
+                child: Text('Create Task'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -110,7 +112,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
 Future<void> createTask(String title, String description, DateTime deadline,
     List<String> labels) async {
-  // final user = await getCurrentUser();
+  final user = await getCurrentUser();
   // debugPrint(user.$id);
   try {
     await databases.createDocument(
@@ -123,7 +125,7 @@ Future<void> createTask(String title, String description, DateTime deadline,
         'due_date': deadline.toIso8601String(),
         'status': 'In-progress',
         'priority': 'Medium',
-        'user_id': "dummy-to check",
+        'user_id': user.$id,
       },
     );
     // debugPrint(user.$id);
