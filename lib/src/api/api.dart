@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskify_app/src/appwrite/appwrite.dart';
 
-
 Future<String?> getSessionFromSharedPreferences() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   return prefs.getString('session_id');
 }
 
 Future getCurrentUser() async {
-    return await account.get();
-  }
+  return await account.get();
+}
 
 Future<void> logout(context) async {
   try {
@@ -27,5 +26,4 @@ Future<void> logout(context) async {
     // Handle errors, such as network issues or unauthorized access
     print('Error deleting session: $e');
   }
-
 }

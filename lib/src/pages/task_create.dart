@@ -88,7 +88,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final labels =
         _labelsController.text.split(',').map((label) => label.trim()).toList();
 
-    if (title.isEmpty || _selectedDeadline == null) {
+    if (title.isEmpty) {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
