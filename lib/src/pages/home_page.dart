@@ -6,12 +6,13 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-          onPressed: () {
-            logout(context);
-          },
-          child: const Text("logout")),
-    );
+    return Scaffold(
+        appBar: AppBar(title: const Text("Home")),
+        body: Text('HOME'),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/taskCreate');
+            },
+            child: const Icon(Icons.add)));
   }
 }
