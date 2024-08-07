@@ -1,3 +1,4 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:taskify_app/src/api/api.dart';
@@ -27,9 +28,11 @@ class TaskListWidget extends StatefulWidget {
 class _TaskListWidgetState extends State<TaskListWidget> {
   Future<List<Map<String, dynamic>>> fetchTasks() async {
     // Simulating the response from the databases.listDocuments method
+    final user = await getCurrentUser();
     final response = await databases.listDocuments(
       databaseId: '66b2f92b001fa210401e',
       collectionId: '66b2fede0024cc71bab7',
+      queries: [Query.equal('user_id', user.$id)],
     );
     return response.documents.map((doc) => doc.data).toList();
   }
