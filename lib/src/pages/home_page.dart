@@ -83,19 +83,26 @@ class _HomePageBodyState extends State<_HomePageBody> {
 
   Future<Map<String, int>> fetchTaskSummary() async {
     try {
-      final completedTasksCount =
-          await _taskService.getTaskCount(status: 'Done');
-      final pendingTasksCount =
-          await _taskService.getTaskCount(status: 'To-do');
+      final user = await getCurrentUser();
+      final userId = user.$id; 
+      final completedTasksCount = await _taskService.getTaskCount(
+      status: 'Done',
+      userId: userId,
+    );
+    final pendingTasksCount = await _taskService.getTaskCount(
+      status: 'To-do',
+      userId: userId,
+    );
       final today = DateTime.now();
       final approachingDeadlineCount = await _taskService.getTaskCount(
-            status: 'To-do',
-            dueDateBefore: today,
-          ) +
-          await _taskService.getTaskCount(
-            status: 'In-progress',
-            dueDateBefore: today,
-          );
+        status: 'To-do',
+        userId: userId,
+        dueDateBefore: today,
+      ) + await _taskService.getTaskCount(
+        status: 'In-progress',
+        userId: userId,
+        dueDateBefore: today,
+      );
 
       return {
         'completedTasks': completedTasksCount,

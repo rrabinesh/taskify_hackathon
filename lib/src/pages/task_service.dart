@@ -7,11 +7,15 @@ class TaskService {
 
   Future<int> getTaskCount({
     required String status,
+    required String userId,
     DateTime? dueDateBefore,
   }) async {
     try {
       final query = [
         Query.equal('status', status),
+        // ignore: unnecessary_null_comparison
+        if (userId != null)
+          Query.equal('user_id', userId),
         if (dueDateBefore != null) 
           Query.lessThan('due_date', dueDateBefore.toIso8601String()),
       ];
