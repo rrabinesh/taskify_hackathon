@@ -110,7 +110,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
 Future<void> createTask(String title, String description, DateTime deadline,
     List<String> labels) async {
-  final user = await getCurrentUser();
+  // final user = await getCurrentUser();
+  // debugPrint(user.$id);
   try {
     await databases.createDocument(
       databaseId: '66b2f92b001fa210401e',
@@ -120,12 +121,12 @@ Future<void> createTask(String title, String description, DateTime deadline,
         'title': title,
         'description': description,
         'due_date': deadline.toIso8601String(),
-        'status': 'pending',
-        'priority': 'medium',
-        'user_id': user.$id,
+        'status': 'In-progress',
+        'priority': 'Medium',
+        'user_id': "dummy-to check",
       },
     );
-    debugPrint(user.$id);
+    // debugPrint(user.$id);
   } catch (e) {
     print('Error creating task: $e');
   }
