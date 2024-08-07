@@ -14,7 +14,7 @@ Future<void> logout(context) async {
     if (session_id != null) {
       // Call deleteSession to remove the current session
       await account.deleteSession(sessionId: session_id);
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       print('Session deleted successfully');
     } else {
       print('No session found');
