@@ -215,11 +215,15 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                       },
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditTaskScreen(task: task),
-                            ),
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return TaskEditSheet(
+                                task: task,
+                                updateTask:
+                                    updateTask, // Pass the updateTask function
+                              );
+                            },
                           );
                         },
                         child: Padding(
