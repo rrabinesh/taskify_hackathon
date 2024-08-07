@@ -216,15 +216,19 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                       child: GestureDetector(
                         onTap: () {
                           showModalBottomSheet(
-                            context: context,
-                            builder: (context) {
-                              return TaskEditSheet(
-                                task: task,
-                                updateTask:
-                                    updateTask, // Pass the updateTask function
-                              );
-                            },
-                          );
+                              context: context,
+                              isScrollControlled: true,
+                              useSafeArea: mounted,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                              ),
+                              builder: (context) => TaskEditSheet(
+                                    task: task,
+                                    updateTask:
+                                        updateTask, // Pass the updateTask function
+                                  ));
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(10),
@@ -314,9 +318,11 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     }
   }
 }
+
 class TaskEditSheet extends StatefulWidget {
   final Map<String, dynamic> task;
-  final Future<void> Function(String taskId, String title, String description, DateTime? deadline, String? status) updateTask;
+  final Future<void> Function(String taskId, String title, String description,
+      DateTime? deadline, String? status) updateTask;
 
   TaskEditSheet({required this.task, required this.updateTask});
 
@@ -333,19 +339,31 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   String? _selectedCategory;
 
   final List<String> _priorities = ['Low', 'Medium', 'High'];
-  final List<String> _statuses = ['To-do', 'In-progress', 'Done']; // Corrected status values
+  final List<String> _statuses = [
+    'To-do',
+    'In-progress',
+    'Done'
+  ]; // Corrected status values
   final List<String> _categories = ['Work', 'Personal', 'Others'];
 
   @override
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.task['title'] ?? '');
-    descriptionController = TextEditingController(text: widget.task['description'] ?? '');
-    _selectedPriority = _priorities.contains(widget.task['priority']) ? widget.task['priority'] : _priorities[0];
-    _selectedStatus = _statuses.contains(widget.task['status']) ? widget.task['status'] : _statuses[0];
-    _selectedCategory = _categories.contains(widget.task['category']) ? widget.task['category'] : _categories[0];
+    descriptionController =
+        TextEditingController(text: widget.task['description'] ?? '');
+    _selectedPriority = _priorities.contains(widget.task['priority'])
+        ? widget.task['priority']
+        : _priorities[0];
+    _selectedStatus = _statuses.contains(widget.task['status'])
+        ? widget.task['status']
+        : _statuses[0];
+    _selectedCategory = _categories.contains(widget.task['category'])
+        ? widget.task['category']
+        : _categories[0];
     if (widget.task['due_date'] != null) {
-      _selectedDeadline = DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
+      _selectedDeadline =
+          DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
     }
   }
 
@@ -476,7 +494,11 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
                 // Call the updateTask function
                 await widget.updateTask(
-                  taskId, title, description, deadline, status,
+                  taskId,
+                  title,
+                  description,
+                  deadline,
+                  status,
                 );
 
                 // Close the bottom sheet
