@@ -227,15 +227,19 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                       child: GestureDetector(
                         onTap: () {
                           showModalBottomSheet(
-                            context: context,
-                            builder: (context) {
-                              return TaskEditSheet(
-                                task: task,
-                                updateTask:
-                                    updateTask, // Pass the updateTask function
-                              );
-                            },
-                          );
+                              context: context,
+                              isScrollControlled: true,
+                              useSafeArea: mounted,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                              ),
+                              builder: (context) => TaskEditSheet(
+                                    task: task,
+                                    updateTask:
+                                        updateTask, // Pass the updateTask function
+                                  ));
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(10),
