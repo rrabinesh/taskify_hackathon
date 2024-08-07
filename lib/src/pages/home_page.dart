@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:taskify_app/src/api/api.dart';
 import 'package:taskify_app/src/appwrite/appwrite.dart';
 
@@ -106,11 +107,16 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                     return Dismissible(
                       direction: DismissDirection.startToEnd,
                       key: Key(task['\$id']),
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerLeft,
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Icon(Icons.delete, color: Colors.white),
+                      background: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.red),
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
                       ),
                       confirmDismiss: (direction) async {
                         if (direction == DismissDirection.startToEnd) {
@@ -120,8 +126,9 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                         return null;
                       },
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(10),
                         child: Container(
+                          alignment: Alignment.topLeft,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -134,24 +141,53 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                               ),
                             ],
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                task['title'] ?? 'No Title',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    task['title'] ?? 'No Title',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    task['due_date'] != null
+                                        ? DateFormat.yMMMMd().format(
+                                            DateTime.parse(task['due_date']))
+                                        : 'No Due Date',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(height: 8),
-                              Text(
-                                task['description'] ?? 'No Description',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
+                              Container(
+                                  width: 70,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                      color: task['status'] == 'Done'
+                                          ? Colors.green
+                                          : task['status'] == 'To-Do'
+                                              ? Colors.grey
+                                              : Colors.orange,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.transparent,
+                                        width: 1.0,
+                                      )),
+                                  margin: EdgeInsets.only(left: 20),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      task['status'] ?? 'To-Do',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  )),
                             ],
                           ),
                         ),
