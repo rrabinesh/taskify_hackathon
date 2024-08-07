@@ -166,21 +166,17 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                                   ),
                                 ],
                               ),
+                              SizedBox(width: 16),
                               Container(
                                   width: 70,
                                   height: 20,
                                   decoration: BoxDecoration(
-                                      color: task['status'] == 'Done'
-                                          ? Colors.green
-                                          : task['status'] == 'To-Do'
-                                              ? Colors.grey
-                                              : Colors.orange,
+                                      color: taskColor(task['status']),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: Colors.transparent,
                                         width: 1.0,
                                       )),
-                                  margin: EdgeInsets.only(left: 20),
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
@@ -201,5 +197,17 @@ class _TaskListWidgetState extends State<TaskListWidget> {
         ],
       ),
     );
+  }
+
+  taskColor(task) {
+    if (task == 'To-do') {
+      return Colors.blue.withOpacity(0.8);
+    } else if (task == 'In-progress') {
+      return Colors.orange.withOpacity(0.8);
+    } else if (task == 'Done') {
+      return Colors.green.withOpacity(0.8);
+    } else {
+      return Colors.grey.withOpacity(0.5);
+    }
   }
 }
