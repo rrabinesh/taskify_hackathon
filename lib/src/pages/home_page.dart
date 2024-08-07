@@ -7,10 +7,41 @@ import 'package:taskify_app/src/appwrite/appwrite.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  Future<String> getCurrentUser() async {
+    try {
+      final user = await account.get();
+      return user.email.split('@')[0];
+    } catch (e) {
+      return "User not logged in";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Home")),
+        appBar: AppBar(
+          title: FutureBuilder<String>(
+            future: getCurrentUser(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text("Error: ${snapshot.error}");
+              } else {
+                return Text("Hi ${snapshot.data}");
+              }
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: () async {
+                await logout(context);
+                // Optionally, navigate to the login screen or show a confirmation
+              },
+            ),
+          ],
+        ),
         body: TaskListWidget(),
         floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -93,13 +124,16 @@ class _TaskListWidgetState extends State<TaskListWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'My Tasks',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              const Padding(
+                padding: EdgeInsets.only(left: 15.0),
+                child: Text(
+                  'My Tasks',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.start,
                 ),
-                textAlign: TextAlign.start,
               ),
               TextButton(
                 onPressed: () {},
