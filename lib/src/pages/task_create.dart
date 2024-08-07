@@ -11,8 +11,14 @@ class CreateTaskScreen extends StatefulWidget {
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _labelsController = TextEditingController();
   DateTime _selectedDeadline = DateTime.now();
+  String _selectedPriority = 'Medium';
+  String _selectedStatus = 'To-do';
+  String _selectedCategory = 'Task';
+
+  final List<String> _priorities = ['Low', 'Medium', 'High'];
+  final List<String> _statuses = ['To-do', 'In-progress', 'Done'];
+  final List<String> _categories = ['Event', 'Task'];
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +38,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               TextField(
                 controller: _descriptionController,
                 decoration: InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-              ),
-              TextField(
-                controller: _labelsController,
-                decoration:
-                    InputDecoration(labelText: 'Labels (comma separated)'),
+                maxLines: 2,
               ),
               SizedBox(height: 20),
               Row(
@@ -53,6 +54,54 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     child: Text('Choose Deadline'),
                   ),
                 ],
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _selectedPriority,
+                decoration: InputDecoration(labelText: 'Priority'),
+                items: _priorities.map((String priority) {
+                  return DropdownMenuItem<String>(
+                    value: priority,
+                    child: Text(priority),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedPriority = newValue!;
+                  });
+                },
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: InputDecoration(labelText: 'Status'),
+                items: _statuses.map((String status) {
+                  return DropdownMenuItem<String>(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedStatus = newValue!;
+                  });
+                },
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(labelText: 'Category'),
+                items: _categories.map((String category) {
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCategory = newValue!;
+                  });
+                },
               ),
               SizedBox(height: 20),
               ElevatedButton(
@@ -85,8 +134,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Future<void> _createTask() async {
     final title = _titleController.text;
     final description = _descriptionController.text;
-    final labels =
-        _labelsController.text.split(',').map((label) => label.trim()).toList();
 
     if (title.isEmpty) {
       // Show error message
@@ -98,20 +145,32 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
-    await createTask(
-      title,
-      description,
-      _selectedDeadline,
-      labels,
-    );
+    try {
+      await createTask(title, description, _selectedDeadline, _selectedPriority,
+          _selectedStatus, _selectedCategory);
 
-    // Navigate back to the home screen or show a success message
-    Navigator.pop(context);
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Task created successfully!'),
+        ),
+      );
+
+      // Navigate back to the home screen or show a success message
+      Navigator.pop(context);
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error creating task: $e'),
+        ),
+      );
+    }
   }
 }
 
 Future<void> createTask(String title, String description, DateTime deadline,
-    List<String> labels) async {
+    String priority, String status, String category) async {
   final user = await getCurrentUser();
   // debugPrint(user.$id);
   try {
@@ -123,9 +182,10 @@ Future<void> createTask(String title, String description, DateTime deadline,
         'title': title,
         'description': description,
         'due_date': deadline.toIso8601String(),
-        'status': 'In-progress',
-        'priority': 'Medium',
+        'status': status,
+        'priority': priority,
         'user_id': user.$id,
+        'task_category': category,
       },
     );
     // debugPrint(user.$id);
