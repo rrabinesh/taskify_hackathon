@@ -40,58 +40,86 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     }
   }
 
+  Future<bool> _deleteTask(String taskId) async {
+    try {
+      await databases.deleteDocument(
+        databaseId: '66b2f92b001fa210401e',
+        collectionId: '66b2fede0024cc71bab7',
+        documentId: taskId,
+      );
+      return true;
+    } catch (e) {
+      print('Error deleting task: $e');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'My Tasks',
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'My Tasks',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.start,
+              ),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  'See all',
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.start,
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'See all',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.pink,
-                    ),
+                    fontSize: 16,
+                    color: Colors.pink,
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: taskStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  } else if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.data!.isEmpty) {
-                    return Center(child: Text('No tasks found'));
-                  }
-                  final tasks = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      return Padding(
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: taskStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                } else if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.data!.isEmpty) {
+                  return Center(child: Text('No tasks found'));
+                }
+                final tasks = snapshot.data!;
+                return ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    return Dismissible(
+                      direction: DismissDirection.startToEnd,
+                      key: Key(task['\$id']),
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerLeft,
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) async {
+                        if (direction == DismissDirection.startToEnd) {
+                          _deleteTask(task['\$id']);
+                          return false; // Return false to prevent dismissing the item
+                        }
+                        return null;
+                      },
+                      child: Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Container(
                           padding: const EdgeInsets.all(16),
@@ -127,14 +155,14 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                             ],
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
