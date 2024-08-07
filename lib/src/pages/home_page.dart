@@ -5,6 +5,9 @@ import 'package:taskify_app/src/api/api.dart';
 import 'package:taskify_app/src/appwrite/appwrite.dart';
 import 'package:taskify_app/src/pages/edit_task.dart';
 import 'package:taskify_app/src/pages/graph.dart';
+import 'task_summary_chart.dart';
+import 'task_service.dart'; 
+import 'package:appwrite/appwrite.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -54,7 +57,8 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        body: TaskListWidget(),
+        //body: TaskListWidget(),
+        body: _HomePageBody(),
         floatingActionButton: FloatingActionButton(
             onPressed: () {
               Navigator.pushNamed(context, '/taskCreate');
@@ -62,8 +66,87 @@ class HomePage extends StatelessWidget {
             child: const Icon(Icons.add)));
   }
 }
+class _HomePageBody extends StatefulWidget {
+  @override
+  _HomePageBodyState createState() => _HomePageBodyState();
+}
 
+class _HomePageBodyState extends State<_HomePageBody> {
+  late final TaskService _taskService;
+
+  @override
+  void initState() {
+    super.initState();
+    _taskService = TaskService(databases); // Initialize here
+  }
+
+  Future<Map<String, int>> fetchTaskSummary() async {
+    try {
+      final completedTasksCount = await _taskService.getTaskCount(status: 'Done');
+      final pendingTasksCount = await _taskService.getTaskCount(status: 'To-do');
+      final today = DateTime.now();
+      final approachingDeadlineCount = await _taskService.getTaskCount(
+        status: 'To-do',
+        dueDateBefore: today,
+      ) + await _taskService.getTaskCount(
+        status: 'In-progress',
+        dueDateBefore: today,
+      );
+
+      return {
+        'completedTasks': completedTasksCount,
+        'pendingTasks': pendingTasksCount,
+        'tasksApproachingDeadline': approachingDeadlineCount,
+      };
+    } catch (e) {
+      print('Error fetching task summary: $e');
+      return {
+        'completedTasks': 0,
+        'pendingTasks': 0,
+        'tasksApproachingDeadline': 0,
+      };
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/taskCreate');
+            },
+            child: const Text("Add Task"),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: FutureBuilder<Map<String, int>>(
+            future: fetchTaskSummary(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData) {
+                return Center(child: Text('No summary data available'));
+              }
+              return TaskSummaryChart(summary: snapshot.data!);
+            },
+          ),
+        ),
+        Expanded(child: TaskListWidget(taskService: _taskService)),
+      ],
+    );
+  }
+}
 class TaskListWidget extends StatefulWidget {
+  final TaskService taskService;
+
+  const TaskListWidget({super.key, required this.taskService});
+
   @override
   _TaskListWidgetState createState() => _TaskListWidgetState();
 }
