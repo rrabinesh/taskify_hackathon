@@ -11,19 +11,28 @@ Future getCurrentUser() async {
   return await account.get();
 }
 
-Future<void> logout(context) async {
+Future<void> _removeSession() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(
+      'session_id'); // This will remove the session_id from SharedPreferences
+}
+
+Future<void> logout(BuildContext context) async {
   try {
     final session_id = await getSessionFromSharedPreferences();
     if (session_id != null) {
-      // Call deleteSession to remove the current session
+      await _removeSession();
       await account.deleteSession(sessionId: session_id);
-      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-      print('Session deleted successfully');
+      Navigator.popAndPushNamed(context, '/'); // Navigate to the login screen
+      print('Session deleted and removed from SharedPreferences successfully');
     } else {
       print('No session found');
     }
   } catch (e) {
-    // Handle errors, such as network issues or unauthorized access
     print('Error deleting session: $e');
+    // Optionally show a message to the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting session: $e')),
+    );
   }
 }
