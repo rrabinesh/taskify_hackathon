@@ -6,7 +6,7 @@ import 'package:taskify_app/src/appwrite/appwrite.dart';
 import 'package:taskify_app/src/pages/edit_task.dart';
 import 'package:taskify_app/src/pages/graph.dart';
 import 'task_summary_chart.dart';
-import 'task_service.dart'; 
+import 'task_service.dart';
 import 'package:appwrite/appwrite.dart';
 
 class HomePage extends StatelessWidget {
@@ -66,6 +66,7 @@ class HomePage extends StatelessWidget {
             child: const Icon(Icons.add)));
   }
 }
+
 class _HomePageBody extends StatefulWidget {
   @override
   _HomePageBodyState createState() => _HomePageBodyState();
@@ -82,16 +83,19 @@ class _HomePageBodyState extends State<_HomePageBody> {
 
   Future<Map<String, int>> fetchTaskSummary() async {
     try {
-      final completedTasksCount = await _taskService.getTaskCount(status: 'Done');
-      final pendingTasksCount = await _taskService.getTaskCount(status: 'To-do');
+      final completedTasksCount =
+          await _taskService.getTaskCount(status: 'Done');
+      final pendingTasksCount =
+          await _taskService.getTaskCount(status: 'To-do');
       final today = DateTime.now();
       final approachingDeadlineCount = await _taskService.getTaskCount(
-        status: 'To-do',
-        dueDateBefore: today,
-      ) + await _taskService.getTaskCount(
-        status: 'In-progress',
-        dueDateBefore: today,
-      );
+            status: 'To-do',
+            dueDateBefore: today,
+          ) +
+          await _taskService.getTaskCount(
+            status: 'In-progress',
+            dueDateBefore: today,
+          );
 
       return {
         'completedTasks': completedTasksCount,
@@ -114,15 +118,6 @@ class _HomePageBodyState extends State<_HomePageBody> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/taskCreate');
-            },
-            child: const Text("Add Task"),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
           child: FutureBuilder<Map<String, int>>(
             future: fetchTaskSummary(),
             builder: (context, snapshot) {
@@ -142,6 +137,7 @@ class _HomePageBodyState extends State<_HomePageBody> {
     );
   }
 }
+
 class TaskListWidget extends StatefulWidget {
   final TaskService taskService;
 

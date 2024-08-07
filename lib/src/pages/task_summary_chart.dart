@@ -11,7 +11,7 @@ class TaskSummaryChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Task Summary',
+          'Progress Overview',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 20),
