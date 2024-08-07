@@ -76,7 +76,12 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     final List<String> queries = [Query.equal('user_id', user.$id)];
     if (selectedDate != null) {
       final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-      queries.add(Query.equal('due_date', formattedDate));
+      final startOfDay = DateTime.parse('${formattedDate}T00:00:00Z');
+      final endOfDay =
+          startOfDay.add(Duration(days: 1)).subtract(Duration(microseconds: 1));
+      queries.add(
+          Query.greaterThanEqual('due_date', startOfDay.toIso8601String()));
+      queries.add(Query.lessThan('due_date', endOfDay.toIso8601String()));
     }
     final response = await databases.listDocuments(
       databaseId: '66b2f92b001fa210401e',
