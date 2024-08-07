@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:taskify_app/src/api/api.dart';
 import 'package:taskify_app/src/appwrite/appwrite.dart';
 import 'package:taskify_app/src/pages/edit_task.dart';
+import 'package:taskify_app/src/pages/graph.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -39,6 +40,16 @@ class HomePage extends StatelessWidget {
               onPressed: () async {
                 await logout(context);
                 // Optionally, navigate to the login screen or show a confirmation
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.bar_chart),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TodayTasksGraphPage()),
+                );
               },
             ),
           ],
@@ -314,9 +325,11 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     }
   }
 }
+
 class TaskEditSheet extends StatefulWidget {
   final Map<String, dynamic> task;
-  final Future<void> Function(String taskId, String title, String description, DateTime? deadline, String? status) updateTask;
+  final Future<void> Function(String taskId, String title, String description,
+      DateTime? deadline, String? status) updateTask;
 
   TaskEditSheet({required this.task, required this.updateTask});
 
@@ -333,19 +346,31 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   String? _selectedCategory;
 
   final List<String> _priorities = ['Low', 'Medium', 'High'];
-  final List<String> _statuses = ['To-do', 'In-progress', 'Done']; // Corrected status values
+  final List<String> _statuses = [
+    'To-do',
+    'In-progress',
+    'Done'
+  ]; // Corrected status values
   final List<String> _categories = ['Work', 'Personal', 'Others'];
 
   @override
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.task['title'] ?? '');
-    descriptionController = TextEditingController(text: widget.task['description'] ?? '');
-    _selectedPriority = _priorities.contains(widget.task['priority']) ? widget.task['priority'] : _priorities[0];
-    _selectedStatus = _statuses.contains(widget.task['status']) ? widget.task['status'] : _statuses[0];
-    _selectedCategory = _categories.contains(widget.task['category']) ? widget.task['category'] : _categories[0];
+    descriptionController =
+        TextEditingController(text: widget.task['description'] ?? '');
+    _selectedPriority = _priorities.contains(widget.task['priority'])
+        ? widget.task['priority']
+        : _priorities[0];
+    _selectedStatus = _statuses.contains(widget.task['status'])
+        ? widget.task['status']
+        : _statuses[0];
+    _selectedCategory = _categories.contains(widget.task['category'])
+        ? widget.task['category']
+        : _categories[0];
     if (widget.task['due_date'] != null) {
-      _selectedDeadline = DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
+      _selectedDeadline =
+          DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
     }
   }
 
@@ -476,7 +501,11 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
                 // Call the updateTask function
                 await widget.updateTask(
-                  taskId, title, description, deadline, status,
+                  taskId,
+                  title,
+                  description,
+                  deadline,
+                  status,
                 );
 
                 // Close the bottom sheet
