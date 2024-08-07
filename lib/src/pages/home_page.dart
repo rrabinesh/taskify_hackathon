@@ -77,7 +77,7 @@ class _TaskListWidgetState extends State<TaskListWidget> {
 
   Stream<List<Map<String, dynamic>>> taskStream() async* {
     while (true) {
-      await Future.delayed(Duration(seconds: 1)); // Simulate real-time updates
+      // await Future.delayed(Duration(seconds: 1)); // Simulate real-time updates
       yield await fetchTasks();
     }
   }
@@ -97,7 +97,7 @@ class _TaskListWidgetState extends State<TaskListWidget> {
   }
 
   Future<void> updateTask(String taskId, String title, String description,
-      DateTime? deadline, String? status, List<String>? labels) async {
+      DateTime? deadline, String? status) async {
     try {
       final data = {
         'title': title,
@@ -314,11 +314,9 @@ class _TaskListWidgetState extends State<TaskListWidget> {
     }
   }
 }
-
 class TaskEditSheet extends StatefulWidget {
   final Map<String, dynamic> task;
-  final Function(String taskId, String title, String description,
-      DateTime? deadline, String? status, List<String>? labels) updateTask;
+  final Future<void> Function(String taskId, String title, String description, DateTime? deadline, String? status) updateTask;
 
   TaskEditSheet({required this.task, required this.updateTask});
 
@@ -335,31 +333,19 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   String? _selectedCategory;
 
   final List<String> _priorities = ['Low', 'Medium', 'High'];
-  final List<String> _statuses = [
-    'To-do',
-    'In-progress',
-    'Done'
-  ]; // Corrected status values
+  final List<String> _statuses = ['To-do', 'In-progress', 'Done']; // Corrected status values
   final List<String> _categories = ['Work', 'Personal', 'Others'];
 
   @override
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.task['title'] ?? '');
-    descriptionController =
-        TextEditingController(text: widget.task['description'] ?? '');
-    _selectedPriority = _priorities.contains(widget.task['priority'])
-        ? widget.task['priority']
-        : _priorities[0];
-    _selectedStatus = _statuses.contains(widget.task['status'])
-        ? widget.task['status']
-        : _statuses[0];
-    _selectedCategory = _categories.contains(widget.task['category'])
-        ? widget.task['category']
-        : _categories[0];
+    descriptionController = TextEditingController(text: widget.task['description'] ?? '');
+    _selectedPriority = _priorities.contains(widget.task['priority']) ? widget.task['priority'] : _priorities[0];
+    _selectedStatus = _statuses.contains(widget.task['status']) ? widget.task['status'] : _statuses[0];
+    _selectedCategory = _categories.contains(widget.task['category']) ? widget.task['category'] : _categories[0];
     if (widget.task['due_date'] != null) {
-      _selectedDeadline =
-          DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
+      _selectedDeadline = DateTime.tryParse(widget.task['due_date']) ?? DateTime.now();
     }
   }
 
@@ -390,23 +376,31 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
           children: [
             TextField(
               controller: titleController,
-              decoration: InputDecoration(labelText: 'Title'),
+              decoration: InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
             ),
             SizedBox(height: 16),
             TextField(
               controller: descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
-              maxLines: 2,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
             ),
             SizedBox(height: 20),
             Row(
               children: [
-                Text(
-                  _selectedDeadline == null
-                      ? 'No Deadline Chosen!'
-                      : 'Deadline: ${DateFormat.yMd().format(_selectedDeadline!)}',
+                Expanded(
+                  child: Text(
+                    _selectedDeadline == null
+                        ? 'No Deadline Chosen!'
+                        : 'Deadline: ${DateFormat.yMd().format(_selectedDeadline!)}',
+                  ),
                 ),
-                Spacer(),
+                SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _presentDatePicker,
                   child: Text('Choose Deadline'),
@@ -416,7 +410,10 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedPriority,
-              decoration: InputDecoration(labelText: 'Priority'),
+              decoration: InputDecoration(
+                labelText: 'Priority',
+                border: OutlineInputBorder(),
+              ),
               items: _priorities.map((String priority) {
                 return DropdownMenuItem<String>(
                   value: priority,
@@ -432,7 +429,10 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedStatus,
-              decoration: InputDecoration(labelText: 'Status'),
+              decoration: InputDecoration(
+                labelText: 'Status',
+                border: OutlineInputBorder(),
+              ),
               items: _statuses.map((String status) {
                 return DropdownMenuItem<String>(
                   value: status,
@@ -448,7 +448,10 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
-              decoration: InputDecoration(labelText: 'Category'),
+              decoration: InputDecoration(
+                labelText: 'Category',
+                border: OutlineInputBorder(),
+              ),
               items: _categories.map((String category) {
                 return DropdownMenuItem<String>(
                   value: category,
@@ -463,7 +466,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Collect the edited task data
                 final String taskId = widget.task['\$id'] ?? '';
                 final String title = titleController.text;
@@ -472,13 +475,20 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 final String? status = _selectedStatus;
 
                 // Call the updateTask function
-                widget.updateTask(
-                    taskId, title, description, deadline, status, []);
+                await widget.updateTask(
+                  taskId, title, description, deadline, status,
+                );
 
                 // Close the bottom sheet
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text('Save', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
