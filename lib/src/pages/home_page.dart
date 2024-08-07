@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:taskify_app/src/api/api.dart';
 import 'package:taskify_app/src/appwrite/appwrite.dart';
+import 'package:taskify_app/src/pages/edit_task.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -10,7 +11,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Home")),
+        appBar: AppBar(title: const Text("My Tasks")),
         body: TaskListWidget(),
         floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -26,13 +27,19 @@ class TaskListWidget extends StatefulWidget {
 }
 
 class _TaskListWidgetState extends State<TaskListWidget> {
+  DateTime? selectedDate;
+
   Future<List<Map<String, dynamic>>> fetchTasks() async {
-    // Simulating the response from the databases.listDocuments method
     final user = await getCurrentUser();
+    final List<String> queries = [Query.equal('user_id', user.$id)];
+    if (selectedDate != null) {
+      final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+      queries.add(Query.equal('due_date', formattedDate));
+    }
     final response = await databases.listDocuments(
       databaseId: '66b2f92b001fa210401e',
       collectionId: '66b2fede0024cc71bab7',
-      queries: [Query.equal('user_id', user.$id)],
+      queries: queries,
     );
     return response.documents.map((doc) => doc.data).toList();
   }
@@ -65,30 +72,52 @@ class _TaskListWidgetState extends State<TaskListWidget> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'My Tasks',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.start,
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'See all',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.pink,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (pickedDate != null && pickedDate != selectedDate) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        selectedDate == null
+                            ? 'Select Date'
+                            : DateFormat.yMd().format(selectedDate!),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      selectedDate = null;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 10),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: taskStream(),
@@ -128,66 +157,76 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                         }
                         return null;
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    task['title'] ?? 'No Title',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditTaskScreen(task: task),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      task['title'] ?? 'No Title',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    task['due_date'] != null
-                                        ? DateFormat.yMMMMd().format(
-                                            DateTime.parse(task['due_date']))
-                                        : 'No Due Date',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[700],
+                                    SizedBox(height: 8),
+                                    Text(
+                                      task['due_date'] != null
+                                          ? DateFormat.yMMMMd().format(
+                                              DateTime.parse(task['due_date']))
+                                          : 'No Due Date',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[700],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(width: 16),
-                              Container(
-                                  width: 70,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                      color: taskColor(task['status']),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: Colors.transparent,
-                                        width: 1.0,
-                                      )),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      task['status'] ?? 'To-Do',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  )),
-                            ],
+                                  ],
+                                ),
+                                SizedBox(width: 16),
+                                Container(
+                                    width: 70,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                        color: taskColor(task['status']),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.transparent,
+                                          width: 1.0,
+                                        )),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        task['status'] ?? 'To-Do',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    )),
+                              ],
+                            ),
                           ),
                         ),
                       ),
